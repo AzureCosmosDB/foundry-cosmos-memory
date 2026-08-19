@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: foundry-cosmos-memory
+metadata:
+  template: foundry-cosmos-memory@1.0.0
+
+# Infrastructure: Cosmos DB + Foundry account/project + model deployments + RBAC.
+infra:
+  provider: bicep
+  path: infra
+  module: main
+
+# After provisioning, create the PromptAgent and prove cross-conversation recall.
+hooks:
+  postprovision:
+    posix:
+      shell: sh
+      run: ./hooks/postprovision.sh
+      interactive: true
+    windows:
+      shell: pwsh
+      run: ./hooks/postprovision.ps1
+      interactive: true
