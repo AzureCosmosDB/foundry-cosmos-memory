@@ -1,0 +1,15 @@
+[project]
+enable_telemetry = false
+
+[features.spontaneous_file_upload]
+enabled = false
+
+[UI]
+name = "Cosmos Memory Chat"
+description = "Cross-conversation agent memory with Microsoft Foundry and Azure Cosmos DB"
+default_theme = "light"
+cot = "tool_call"
+confirm_new_chat = false
+
+[meta]
+generated_by = "2.11.1"

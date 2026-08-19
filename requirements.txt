@@ -1,0 +1,6 @@
+agent-framework-azure-cosmos-memory==1.0.0a260730
+agent-framework-foundry==1.10.4
+azure-ai-projects==2.3.0
+azure-identity==1.26.0b2
+chainlit==2.11.1
+python-dotenv==1.2.2
