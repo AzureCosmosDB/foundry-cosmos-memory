@@ -25,7 +25,7 @@ COSMOS_DATABASE = os.getenv("COSMOS_DATABASE", "ai_memory")
 
 FOUNDRY_ENDPOINT = require("FOUNDRY_ENDPOINT")
 FOUNDRY_PROJECT_ENDPOINT = os.getenv("FOUNDRY_PROJECT_ENDPOINT", FOUNDRY_ENDPOINT)
-CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o-mini")
+CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-5-mini")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-large")
 FOUNDRY_AGENT_NAME = os.getenv("FOUNDRY_AGENT_NAME", "cosmos-memory-sample-agent")
 

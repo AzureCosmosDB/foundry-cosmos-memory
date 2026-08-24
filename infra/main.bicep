@@ -14,10 +14,10 @@ param principalId string
 param principalType string = 'User'
 
 @description('Chat model deployment name.')
-param chatModelName string = 'gpt-4o-mini'
+param chatModelName string = 'gpt-5-mini'
 
 @description('Chat model version.')
-param chatModelVersion string = '2024-07-18'
+param chatModelVersion string = '2025-08-07'
 
 @description('Embedding model deployment name.')
 param embeddingModelName string = 'text-embedding-3-large'
@@ -75,7 +75,7 @@ resource embeddingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2
   dependsOn: [ chatDeployment ]
   sku: {
     name: 'Standard'
-    capacity: 50
+    capacity: 10
   }
   properties: {
     model: {

@@ -1,0 +1,2 @@
+-r requirements.txt
+chainlit==2.11.1

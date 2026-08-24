@@ -16,25 +16,7 @@ RUNTIME_KEY = "agent_runtime"
 SESSION_KEY = "agent_session"
 USER_ID_KEY = "memory_user_id"
 USER_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
-
-
-def navigation_actions() -> list[cl.Action]:
-    return [
-        cl.Action(
-            name="new_conversation",
-            payload={},
-            label="New conversation",
-            icon="message-square-plus",
-            tooltip="Start a new conversation while keeping this user's memory",
-        ),
-        cl.Action(
-            name="switch_user",
-            payload={},
-            label="Switch user",
-            icon="users",
-            tooltip="Change the long-term memory identity",
-        ),
-    ]
+DEMO_USER_IDS = ("theo", "casey")
 
 
 def example_actions() -> list[cl.Action]:
@@ -55,11 +37,39 @@ def example_actions() -> list[cl.Action]:
 
 
 async def ask_for_user_id() -> str | None:
+    actions = [
+        cl.Action(name="pick_user", payload={"user_id": uid}, label=uid, icon="user")
+        for uid in DEMO_USER_IDS
+    ]
+    actions.append(
+        cl.Action(name="pick_user", payload={"custom": True}, label="Type my own", icon="pencil")
+    )
+
+    choice = await cl.AskActionMessage(
+        content=(
+            "Choose a demo user ID. Memories are isolated by this value. Do not enter "
+            "personal or sensitive information."
+        ),
+        actions=actions,
+        timeout=3600,
+    ).send()
+    if not choice:
+        return None
+
+    user_id = choice.get("payload", {}).get("user_id")
+    if user_id:
+        return user_id
+
+    return await ask_for_custom_user_id()
+
+
+async def ask_for_custom_user_id() -> str | None:
     while True:
         response = await cl.AskUserMessage(
             content=(
-                "Choose a demo user ID (for example, `theo`). Memories are isolated by "
-                "this value. Do not enter personal or sensitive information."
+                "Type a demo user ID in the message box below and press Enter, for "
+                "example `theo`. Memories are isolated by this value. Do not enter "
+                "personal or sensitive information."
             ),
             timeout=3600,
         ).send()
@@ -128,11 +138,12 @@ async def on_chat_start() -> None:
     await cl.Message(
         content=(
             f"**Memory user:** `{user_id}`\n\n"
-            "Tell the agent a preference, goal, or constraint. Then choose **New "
-            "conversation** and ask about it again. The conversation will reset, while "
-            "Cosmos DB memory remains available for this user ID."
+            "Tell the agent a preference, goal, or constraint, then ask about it "
+            "again. To reset the conversation or switch users, start a **New chat** "
+            "(top-left) and pick an ID: the same ID keeps memory, a different ID "
+            "isolates it."
         ),
-        actions=navigation_actions() + example_actions(),
+        actions=example_actions(),
     ).send()
 
 
@@ -152,7 +163,6 @@ async def on_message(message: cl.Message) -> None:
     if content == "/help":
         await cl.Message(
             content="Use `/new` for a fresh conversation or `/user <id>` to switch users.",
-            actions=navigation_actions(),
         ).send()
         return
 
@@ -175,7 +185,7 @@ async def new_conversation(action: cl.Action | None) -> None:
             f"Started a new conversation for `{user_id}`. Conversation history was "
             "cleared; long-term memory was kept."
         ),
-        actions=navigation_actions() + example_actions()[1:],
+        actions=example_actions()[1:],
     ).send()
 
 
@@ -188,17 +198,7 @@ async def switch_to_user(user_id: str) -> None:
             f"Switched to memory user `{user_id}` and started a new conversation. "
             "This user does not inherit the previous user's memories."
         ),
-        actions=navigation_actions() + example_actions(),
-    ).send()
-
-
-@cl.action_callback("switch_user")
-async def switch_user(action: cl.Action) -> None:
-    await cl.Message(
-        content=(
-            "Enter `/user <id>` to switch memory users and start a new conversation. "
-            "For example: `/user casey`."
-        )
+        actions=example_actions(),
     ).send()
 
 
