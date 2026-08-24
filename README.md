@@ -16,7 +16,7 @@ and **Microsoft Agent Framework**.
 |---|---|---|
 | Azure resource group | Azure Developer CLI | Contains the sample resources |
 | Microsoft Foundry account and project | Bicep | Hosts models and Agent Service |
-| `gpt-4o-mini` deployment | Bicep | Generates agent responses and extracts memory |
+| `gpt-5-mini` deployment | Bicep | Generates agent responses and extracts memory |
 | `text-embedding-3-large` deployment | Bicep | Embeds memory for semantic retrieval |
 | Azure Cosmos DB for NoSQL account | Bicep | Stores turns and derived memory |
 | `ai_memory` database | Bicep | Memory toolkit database |
@@ -72,9 +72,11 @@ scope.
 
 Because the template creates role assignments, use an identity with **Owner** or
 **User Access Administrator** plus permission to create the resources. Model
-availability and quota vary by region. The sample has been validated in
-`swedencentral`; choose another region only after confirming that both model
-deployments are available there.
+availability and quota vary by region. This sample is validated in **Sweden
+Central**, which offers both `gpt-5-mini` (`GlobalStandard`) and
+`text-embedding-3-large` (regional `Standard`) with quota. The regional `Standard`
+embedding SKU is not offered in every region, so prefer Sweden Central unless you
+have confirmed both SKUs in your target region.
 
 ## Deploy
 
@@ -90,7 +92,9 @@ azd up
 ```
 
 `azd up` prompts for an environment name, subscription, and region. Provisioning
-and the post-provision validation can take several minutes.
+and the post-provision validation can take several minutes. Choose **Sweden
+Central** at the region prompt, or set it up front with
+`azd env set AZURE_LOCATION swedencentral` before running `azd up`.
 
 A successful deployment ends with output similar to:
 
@@ -109,13 +113,16 @@ newly taught peanut allergy, the script exits nonzero and `azd up` fails.
 
 ## Start the browser chat
 
-The cloud resources and agent are now deployed. Export the azd outputs to a local
-`.env` file and start Chainlit.
+The cloud resources and agent are now deployed. The post-provision step installs
+only the packages needed to create the agent and run the memory test, so install
+the optional Chainlit UI dependencies once before starting the browser chat.
+Export the azd outputs to a local `.env` file and start Chainlit.
 
 ### Windows PowerShell
 
 ```powershell
 azd env get-values | Set-Content .env
+.\.venv\Scripts\python.exe -m pip install -r requirements-ui.txt --pre
 .\.venv\Scripts\python.exe -m chainlit run src/chat.py
 ```
 
@@ -124,6 +131,7 @@ azd env get-values | Set-Content .env
 ```bash
 azd env get-values > .env
 . .venv/bin/activate
+python -m pip install -r requirements-ui.txt --pre
 python -m chainlit run src/chat.py
 ```
 
@@ -133,12 +141,12 @@ agent run, model call, and memory operation uses the Azure resources deployed by
 
 Try this sequence:
 
-1. Enter the demo user ID `theo`.
+1. On the first screen, choose the `theo` demo user, or choose **Type my own**.
 2. Send `Remember that my favorite color is vermilion.`
 3. Wait for **Save long-term memory** to finish.
-4. Select **New conversation**.
-5. Ask `What is my favorite color?`
-6. Enter `/user casey`, then ask the same question to demonstrate isolation.
+4. Start a **New chat** (top-left) and choose `theo` again.
+5. Ask `What is my favorite color?` The agent recalls it from Cosmos DB memory.
+6. Start a **New chat** (top-left), choose `casey`, then ask the same question to demonstrate isolation.
 
 Do not enter personal, confidential, or sensitive information. Typed user IDs are
 only a simple demonstration mechanism; production applications should derive the
@@ -213,10 +221,14 @@ command in `.env` before running the test.
 
 ### Model quota or unsupported SKU
 
-Use a region with quota for both `gpt-4o-mini` and
-`text-embedding-3-large`. The chat deployment uses `GlobalStandard`; the embedding
-deployment uses regional `Standard`. You can adjust names, versions, SKU, and
-capacity in [infra/main.bicep](infra/main.bicep).
+Use a region that offers both `gpt-5-mini` (`GlobalStandard`) and
+`text-embedding-3-large` (regional `Standard`) with quota. The regional `Standard`
+embedding SKU is not available in every region (for example, West US, North
+Central US, and South Central US); Sweden Central, East US, West US 3, Canada
+East, and Australia East do offer it. The chat deployment uses `GlobalStandard`
+with capacity 50 and the embedding deployment uses `Standard` with capacity 10.
+You can adjust names, versions, SKU, and capacity in
+[infra/main.bicep](infra/main.bicep).
 
 ### Role assignment failed
 
@@ -256,7 +268,8 @@ extraction completes before the second conversation.
 |   `-- run_memory_test.py     # Fresh-user cross-conversation test
 |-- .chainlit/config.toml
 |-- .env.example
-`-- requirements.txt
+|-- requirements.txt           # Core runtime (agent creation + memory test)
+`-- requirements-ui.txt        # Optional Chainlit browser UI
 ```
 
 ## Clean up

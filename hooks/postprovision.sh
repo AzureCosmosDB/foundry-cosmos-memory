@@ -2,11 +2,15 @@
 set -eu
 
 printf '\n=== [postprovision] Setting up Python environment ===\n'
-python3 -m venv .venv
+# Reuse an existing venv; recreating one whose interpreter is in use can fail.
+if [ ! -x .venv/bin/python ]; then
+  python3 -m venv .venv
+fi
 # shellcheck disable=SC1091
 . .venv/bin/activate
-python -m pip install --quiet --upgrade pip
-python -m pip install --quiet -r requirements.txt --pre
+# Install only the runtime deps needed to create the agent and run the memory test.
+# The Chainlit browser UI (requirements-ui.txt) is optional and installed on demand.
+python -m pip install --quiet --disable-pip-version-check -r requirements.txt --pre
 
 printf '\n=== [postprovision] Creating Foundry PromptAgent ===\n'
 AGENT_OUT="$(python -m src.create_agent)"

@@ -2,12 +2,15 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "=== [postprovision] Setting up Python environment ==="
-python -m venv .venv
-if ($LASTEXITCODE -ne 0) { throw "Failed to create the Python virtual environment." }
+# Reuse an existing venv; recreating one whose python.exe is in use fails on Windows.
+if (-not (Test-Path ".venv\Scripts\python.exe")) {
+  python -m venv .venv
+  if ($LASTEXITCODE -ne 0) { throw "Failed to create the Python virtual environment." }
+}
 & .\.venv\Scripts\Activate.ps1
-python -m pip install --quiet --upgrade pip
-if ($LASTEXITCODE -ne 0) { throw "Failed to upgrade pip." }
-python -m pip install --quiet -r requirements.txt --pre
+# Install only the runtime deps needed to create the agent and run the memory test.
+# The Chainlit browser UI (requirements-ui.txt) is optional and installed on demand.
+python -m pip install --quiet --disable-pip-version-check -r requirements.txt --pre
 if ($LASTEXITCODE -ne 0) { throw "Failed to install Python dependencies." }
 
 Write-Host ""
